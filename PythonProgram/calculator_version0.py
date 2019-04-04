@@ -1,3 +1,6 @@
+import re
+
+
 def is_operator(ch):
     '''
     是否为运算符
@@ -38,6 +41,38 @@ def getprior(ch):
         return -1
 
 
+def str2list(str):
+    '''
+    将算术表达式字符串解析为list列表
+    :param str: string
+    :return: list
+    '''
+    # 1.去除字符串中的空格，以横杠为界限分割并放入list中  即区分减号、负号
+    str = re.sub(' ', '', str)
+    temp_list = re.split('(\-\d+\.?\d*)', str)
+    # 2.对list1进一步解析
+    final_list = []
+    for item in temp_list:
+        # 第一个是以横杠开头的数字（包括小数）即第一个是负数，横杠就不是减号
+        if len(final_list) == 0 and re.search('^\-\d+\.?\d*$', item):
+            final_list.append(item)
+            continue
+
+        if len(final_list) > 0:
+            # 如果最后一个元素是运算符['+', '-', '*', '/', '('], 则横杠数字不是负数
+            if re.search('[\+\-\*\/\(]$', final_list[-1]):
+                final_list.append(item)
+                continue
+
+        # 按照运算符分割开
+        item_split = []
+        for i in re.split('([\+\-\*\/\(\)\=])', item):
+            if i:
+                item_split.append(i)
+        final_list += item_split
+    return final_list
+
+
 def calculate(a, b, operator):
     '''
     计算
@@ -58,7 +93,7 @@ def calculate(a, b, operator):
     return result
 
 
-def cal(str):
+def cal(list):
     '''
     数字：
         入数字栈
@@ -84,15 +119,15 @@ def cal(str):
     '''
     num_stack = []
     oper_stack = []
-    for e in str:
+    for e in list:
         is_oper = is_operator(e)
         if not is_oper:
-            temp = int(e)
-            num_stack.append(temp)
+            num_stack.append(float(e))
         else:
             while True:
                 if len(oper_stack) == 0:
                     oper_stack.append(e)
+                    break
                 if getStackPeek(oper_stack) == '(':
                     if e == ')':
                         oper_stack.pop()
@@ -131,8 +166,8 @@ def cal(str):
 
 if __name__ == '__main__':
     cal_str = input('输入算式：')
-    cal_str_rep = cal_str.replace(' ', '')
-    print(cal(cal_str_rep))
+    result = cal(str2list(cal_str))
+    print(result)
 '''
 测试数据：
 3 * (6 - 2 * 2)= 6
